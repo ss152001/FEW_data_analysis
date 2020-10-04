@@ -1,3 +1,6 @@
+# Python codes for FEW data analysis paper
+# Supanut Suntikoon 
+# supanut.suntikoon@umontana.edu
 def get_current_discharge():
     # retrieve current discharge data of all stations from USGS
     time = []
@@ -219,6 +222,7 @@ def get_L_dH(site_number):
             L = round(L,4) #stream length (m)
             dH = round(dH,6) #gross headh (m)
             print('stream length: ',L,' m','gross head: ',dH,' m')
+            plt.savefig(path+'3Dplot_'+str(site_number)+'.png',dpi=300)
     return L,dH
 
 
@@ -226,7 +230,7 @@ def plot_historical_discharge_energy(site_number,year1,year2):
     # input: site number
     # year1: starting year
     # year2: ending year
-    stream_length,dH = get_L_dH(site_number) #get gross head (m)
+    L,dH = get_L_dH(site_number) #get gross head (m)
     # retrieve current discharge data of all stations from USGS
     import urllib
     import pandas as pd 
@@ -243,12 +247,13 @@ def plot_historical_discharge_energy(site_number,year1,year2):
         os.mkdir(path)
     filename = '/stations.csv'
     d = pd.read_csv(path+filename)
-    if len(str(site_number)) ==7:
-        site_number = '0'+str(site_number)
+
     for i in range(len(d)):
         if d['site_number'][i] == site_number:
             state_code = d['code'][i]
             historical_days = ((year2-year1)+3)*365
+            if len(str(site_number)) ==7:
+                site_number = '0'+str(site_number)
     url='https://nwis.waterdata.usgs.gov/'+state_code+'/nwis/uv?cb_00060=on&format=rdb&site_no='+str(site_number)+'&period='+str(historical_days)
     filename = str(site_number)+'.txt'
     urllib.request.urlretrieve(url,path+filename)
@@ -281,6 +286,7 @@ def plot_historical_discharge_energy(site_number,year1,year2):
     ax = fig.add_subplot(111)
     Qmax = []
     Emax = []
+    Total_E = []
     for i in np.arange(year1,year2+1,1):
         year_i = str(i)
         Y = []
@@ -290,23 +296,36 @@ def plot_historical_discharge_energy(site_number,year1,year2):
             if k[0:4] == year_i:
                 Y.append(v)
         E = [9.8*dH*0.9*Q for Q in Y]
+        #E_per_year = int((sum(E)/len(E))*24*365)
+        CF = 0.55
+        E_per_year = int((sum(E)/len(E))*365*CF/1000) #MWh
+        Total_E.append(E_per_year)
         import matplotlib.pyplot as plt
         Emax.append(max(E))
         Qmax.append(max(Y))
-        ax.plot(Y,label=year_i)
+        
+        ax.plot(Y,label=year_i+': '+ str(E_per_year)+' MWh')
         ax.set_xlim(0,365)
         ax.set_ylim(0,max(Qmax)+20)
         ax.set_xlabel('Day of year')
-        ax.set_ylabel(r'Q ($m^{3} s^{-1}$)')
+        ax.set_ylabel(r'Daily discharge ($m^{3} s^{-1}$)')
         ax.legend(fancybox=True,framealpha=0)
     ax2 = ax.twinx()
-    ax2.grid()
-    ax2.set_ylabel('Power potential (kW)')
+    ax2.set_ylabel('Daily Power potential (MW)')
     plt.title('Data from '+str(year1)+' - '+ str(year2)+' of site number:'+str(site_number))
-    ax2.set_ylim(0,max(Emax))      
+    ax2.set_ylim(0,max(Emax))   
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+
+    textstr = '\n'.join(((r'$P_{total}:$' + str(round(sum(Total_E))) + ' MWh'),
+                         (r'$P_{average}:$' +str(round(sum(Total_E)/(year2-year1+1)))+' MWh/yr'),
+                         (r'L: '+str(int(L))+' m'),
+                         (r'dH:'+str(dH)+' m'),
+                         (r'CF: '+str(CF))))
+    ax.text(0.01, 0.98, textstr, transform=ax.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props)
+    plt.savefig(path+'Q_E_plot_'+str(site_number)+'.png',dpi=300,bbox_inches='tight')
+
 
     
-plot_historical_discharge_energy(12340500,2010,2018)
-
-plot_historical_discharge_energy(12388700,2012,2018)
-plot_historical_discharge_energy(7022000,2012,2018)
+# get_current_discharge() #uncomment this function to run the code
+# plot_historical_discharge_energy(12340500,2018,2019) #uncomment this function to run the code
