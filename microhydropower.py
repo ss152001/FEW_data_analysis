@@ -311,7 +311,7 @@ def plot_historical_discharge_energy(site_number,year1,year2):
         ax.set_ylabel(r'Daily discharge ($m^{3} s^{-1}$)')
         ax.legend(fancybox=True,framealpha=0)
     ax2 = ax.twinx()
-    ax2.set_ylabel('Daily Power potential (MW)')
+    ax2.set_ylabel('Daily Power potential (kW)')
     plt.title('Data from '+str(year1)+' - '+ str(year2)+' of site number:'+str(site_number))
     ax2.set_ylim(0,max(Emax))   
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
