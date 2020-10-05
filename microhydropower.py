@@ -251,7 +251,7 @@ def plot_historical_discharge_energy(site_number,year1,year2):
     for i in range(len(d)):
         if d['site_number'][i] == site_number:
             state_code = d['code'][i]
-            historical_days = ((year2-year1)+3)*365
+            historical_days = ((year2-year1)+3+2020-year1)*365
             if len(str(site_number)) ==7:
                 site_number = '0'+str(site_number)
     url='https://nwis.waterdata.usgs.gov/'+state_code+'/nwis/uv?cb_00060=on&format=rdb&site_no='+str(site_number)+'&period='+str(historical_days)
